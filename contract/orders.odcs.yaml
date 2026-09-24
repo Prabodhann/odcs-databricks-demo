@@ -1,0 +1,54 @@
+apiVersion: v3.2.0
+kind: DataContract
+
+id: urn:odcs-demo:orders
+name: orders-demo
+version: 1.0.0
+status: active
+
+servers:
+  - server: demo
+    type: dataframe
+
+schema:
+  - name: orders
+    physicalType: table
+    physicalName: orders
+
+    properties:
+      - name: order_id
+        logicalType: string
+        physicalType: STRING
+        required: true
+        unique: true
+        logicalTypeOptions:
+          pattern: "^ORD-[0-9]{3}$"
+
+      - name: customer_email
+        logicalType: string
+        physicalType: STRING
+        required: true
+        classification: confidential
+        tags:
+          - pii
+        logicalTypeOptions:
+          pattern: '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+
+      - name: order_total
+        logicalType: number
+        physicalType: DOUBLE
+        required: true
+        logicalTypeOptions:
+          minimum: 0
+          maximum: 100000
+
+      - name: order_status
+        logicalType: string
+        physicalType: STRING
+        required: true
+        enum:
+          - value: pending
+          - value: confirmed
+          - value: shipped
+          - value: delivered
+          - value: cancelled
