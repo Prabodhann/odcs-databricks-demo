@@ -1,21 +1,34 @@
+# ============================================================
+# ODCS 3.2 CONTRACT
+#
+# This contract defines the schema and data-quality promise.
+#
+# It intentionally does NOT contain a "servers" block because
+# the Databricks automation receives the physical source table
+# separately through the SOURCE_TABLE runtime parameter.
+# ============================================================
+
 apiVersion: v3.2.0
 kind: DataContract
 
+# Contract identity
 id: urn:odcs-demo:orders
-name: orders-demo
+name: Orders ODCS 3.2 Demo
 version: 1.0.0
 status: active
 
-servers:
-  - server: demo
-    type: dataframe
-
 schema:
+  # ==========================================================
+  # Dataset governed by this contract
+  # ==========================================================
   - name: orders
     physicalType: table
-    physicalName: orders
 
     properties:
+      # ------------------------------------------------------
+      # Required + unique identifier.
+      # Also validates ORD-001 style format.
+      # ------------------------------------------------------
       - name: order_id
         logicalType: string
         physicalType: STRING
@@ -24,6 +37,13 @@ schema:
         logicalTypeOptions:
           pattern: "^ORD-[0-9]{3}$"
 
+      # ------------------------------------------------------
+      # Email must exist and follow the required pattern.
+      #
+      # classification and tags are governance metadata.
+      # We will separately evaluate whether they result in
+      # executable platform enforcement.
+      # ------------------------------------------------------
       - name: customer_email
         logicalType: string
         physicalType: STRING
@@ -34,6 +54,9 @@ schema:
         logicalTypeOptions:
           pattern: '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
 
+      # ------------------------------------------------------
+      # Amount must be between 0 and 100000.
+      # ------------------------------------------------------
       - name: order_total
         logicalType: number
         physicalType: DOUBLE
@@ -42,6 +65,10 @@ schema:
           minimum: 0
           maximum: 100000
 
+      # ------------------------------------------------------
+      # ODCS 3.2 enum test.
+      # INVALID_STATUS should fail this rule.
+      # ------------------------------------------------------
       - name: order_status
         logicalType: string
         physicalType: STRING
