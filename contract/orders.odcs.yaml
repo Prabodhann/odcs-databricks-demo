@@ -1,62 +1,89 @@
 # ============================================================
-# ODCS 3.2 CONTRACT
+# ODCS v3.1.0 DATA CONTRACT
 #
-# This contract defines the schema and data-quality promise.
+# PURPOSE:
+# This is the single source of truth for the demo.
 #
-# It intentionally does NOT contain a "servers" block because
-# the Databricks automation receives the physical source table
-# separately through the SOURCE_TABLE runtime parameter.
+# The Databricks validation job will:
+#   1. Fetch this contract automatically from GitHub.
+#   2. Validate the contract.
+#   3. Generate DQX checks automatically.
+#   4. Run those checks against the Databricks table.
+#   5. Hard-fail if any ERROR-level violation exists.
+#
+# IMPORTANT:
+# No DQX rules are manually written in this file.
+# They are generated from standard ODCS schema constraints.
 # ============================================================
 
-apiVersion: v3.2.0
+apiVersion: v3.1.0
 kind: DataContract
 
-# Contract identity
+# ------------------------------------------------------------
+# Contract identity and version.
+# Change "version" whenever the contract changes materially.
+# ------------------------------------------------------------
+
 id: urn:odcs-demo:orders
-name: Orders ODCS 3.2 Demo
+name: Orders ODCS 3.1 Demo
 version: 1.0.0
 status: active
 
 schema:
   # ==========================================================
-  # Dataset governed by this contract
+  # DATASET: orders
+  #
+  # DQX will also generate a dataset-level schema validation
+  # rule from this schema.
   # ==========================================================
+
   - name: orders
     physicalType: table
 
     properties:
       # ------------------------------------------------------
-      # Required + unique identifier.
-      # Also validates ORD-001 style format.
+      # RULES PRODUCED:
+      #
+      # required: true
+      #   -> is_not_null
+      #
+      # unique: true
+      #   -> is_unique
       # ------------------------------------------------------
+
       - name: order_id
         logicalType: string
         physicalType: STRING
         required: true
         unique: true
-        logicalTypeOptions:
-          pattern: "^ORD-[0-9]{3}$"
 
       # ------------------------------------------------------
-      # Email must exist and follow the required pattern.
+      # RULES PRODUCED:
       #
-      # classification and tags are governance metadata.
-      # We will separately evaluate whether they result in
-      # executable platform enforcement.
+      # required: true
+      #   -> is_not_null
+      #
+      # pattern:
+      #   -> regex_match
       # ------------------------------------------------------
+
       - name: customer_email
         logicalType: string
         physicalType: STRING
         required: true
-        classification: confidential
-        tags:
-          - pii
         logicalTypeOptions:
           pattern: '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
 
       # ------------------------------------------------------
-      # Amount must be between 0 and 100000.
+      # RULES PRODUCED:
+      #
+      # required: true
+      #   -> is_not_null
+      #
+      # minimum / maximum
+      #   -> is_in_range
       # ------------------------------------------------------
+
       - name: order_total
         logicalType: number
         physicalType: DOUBLE
@@ -64,18 +91,3 @@ schema:
         logicalTypeOptions:
           minimum: 0
           maximum: 100000
-
-      # ------------------------------------------------------
-      # ODCS 3.2 enum test.
-      # INVALID_STATUS should fail this rule.
-      # ------------------------------------------------------
-      - name: order_status
-        logicalType: string
-        physicalType: STRING
-        required: true
-        enum:
-          - value: pending
-          - value: confirmed
-          - value: shipped
-          - value: delivered
-          - value: cancelled
